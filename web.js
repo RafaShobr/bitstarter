@@ -3,17 +3,17 @@ var fs = require('fs');
 
 var app = express.createServer(express.logger());
 
-var readAndSendFileContent = function (file, respond) {
+function readAndSendFileContent(file, response) {
 	fs.readFile(file, 'utf8', function (err,data) {
 		if (err) {
 			return console.log(err);
 		}
-	respond(data);
+	response.send(data);
 	});
 }
 
 app.get('/', function(request, response) {
-  readAndSendFileContent("index.html", response.send);
+  readAndSendFileContent('./index.html', response);
 });
 
 var port = process.env.PORT || 5000;

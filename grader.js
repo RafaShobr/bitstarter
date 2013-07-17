@@ -16,17 +16,22 @@ var assertFileExists = function(infile) {
     return instr;
 };
 
-var getWebsite = function(url) {
-	rest.get(url).on('complete', function(result) {
-	if (result instanceof Error) {
-		console.err('Error: ' + result.message);
-	} else {
-		return result;
-	}
-});
+var checkWebsite = function(url, checks) {
+    rest.get(url).on('complete', function(result) {
+        if (result instanceof Error) {
+            console.err('Error: ' + result.message);
+        } else {
+            var checkJson = checkHtmlFile(result, checks);
+            var outJson = JSON.stringify(checkJson, null, 4);
+            console.log(outJson);
+        }
+    });
 }
 
 var cheerioHtmlFile = function(htmlfile) {
+    if (typeof program.url !== 'undefined' && program.url) {
+        return cheerio.load(htmlfile);
+    }
     return cheerio.load(fs.readFileSync(htmlfile));
 };
 
@@ -54,17 +59,19 @@ var clone = function(fn) {
 if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-        .option('-f, --file [html_file]', 'Path to index.html', HTMLFILE_DEFAULT)
-		.option('-u, --url [url]', 'URL to website')
+        .option('-f, --file [html_file]', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-u, --url [url]', 'URL to website')
         .parse(process.argv);
-	if (typeof program.url !== 'undefined' && program.url) {
-		var checkJson = checkHtmlFile(getWebsite(program.url), program.checks);
-	}
-	else {
-		var checkJson = checkHtmlFile(program.file, program.checks);
-	}
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+    if (typeof program.url !== 'undefined' && program.url) {
+        console.log(program.url);
+        checkWebsite(program.url, program.checks);
+    }
+    else {
+        var checkJson = checkHtmlFile(program.file, program.checks);
+        var outJson = JSON.stringify(checkJson, null, 4);
+        console.log(outJson);
+    }
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
+
